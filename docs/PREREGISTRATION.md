@@ -126,4 +126,4 @@ Also reported, not pass criteria:
 Real money. That needs the operator's explicit go-ahead and a separate pre-registration.
 
 ## Change log
-- (none yet)
+- 2026-11-14: evaluation code committed (commit a852314: `analysis/evaluate.py`, `analysis/resolve.py`, synthetic tests). It was written before any recorded data was downloaded or examined. This is not a rule change.
