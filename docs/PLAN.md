@@ -137,7 +137,7 @@ Rejected alternatives:
 
 ### Encryption key
 
-**Current key is INTERIM (generated 2026-11-14 in a Claude session).** Its private half was generated in that session's temporary container, not on the operator's machine. The operator should replace it with their own key, following the steps below. Files sealed with the interim key stay readable only with the interim private key, so keep that key until those files are decrypted or have expired.
+**Current key is INTERIM (generated 2026-11-14 in a Claude session).** Its private half was generated in that session's temporary container, then saved to the operator's Google Drive (folder "polymarket-orderbook-recorder (private key + data)" / keys / recorder_private_INTERIM.pem, owner-only access) and deleted from the container. The operator should replace it with their own key, following the steps below. Files sealed with the interim key stay readable only with the interim private key, so keep that key until those files are decrypted or have expired.
 
 Operator's own key, made once on their own computer:
 
