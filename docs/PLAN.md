@@ -93,9 +93,9 @@ Rate limit:
 - We run at ≤10 req/s.
 - On 429 or 5xx we wait 1 s, then back off exponentially up to 4 retries, as the docs ask.
 
-Scheduling (interim: GitHub `schedule` every 15 minutes, at :07/:22/:37/:52, until cron-job.org is set up):
+Scheduling (cron-job.org live since 2026-11-14 ~20:00 UTC). [Certain] GitHub's own 15-minute schedule fired only twice in its first 15 hours, which is why it is only a backup:
 - **Primary:** cron-job.org calls the GitHub API `workflow_dispatch` endpoint every 15 minutes.
-- **Backup:** GitHub `schedule` runs hourly at :41 once cron-job.org is live. It only fires from the default branch.
+- **Backup:** GitHub `schedule` runs hourly at :41. It only fires from the default branch.
 - The `concurrency` group stops runs from overlapping.
 
 ## Storage and the terms question

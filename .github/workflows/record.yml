@@ -17,8 +17,7 @@ on:
         description: "Max order books to fetch this run"
         default: "800"
   schedule:
-    # INTERIM: every 15 min until cron-job.org is set up; then change back to hourly backup ("41 * * * *").
-    - cron: "7,22,37,52 * * * *"
+    - cron: "41 * * * *" # hourly backup; cron-job.org provides the 15-minute cadence
   push:
     branches: ["claude/**"]
     paths: ["recorder/**", "keys/**", ".github/workflows/record.yml"]
