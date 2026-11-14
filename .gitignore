@@ -1,0 +1,8 @@
+# Recorded market data must never be committed (see docs/PLAN.md, terms question).
+out/
+data/
+*.jsonl
+*.jsonl.gz
+run-*.json
+__pycache__/
+*.pyc

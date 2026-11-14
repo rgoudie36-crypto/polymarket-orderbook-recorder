@@ -1,2 +1,19 @@
 # polymarket-orderbook-recorder
-Records public Polymarket US order books on a schedule, for a pre-registered paper test of order-book imbalance. No keys, no trades.
+
+This project records public Polymarket US order books on a schedule. The recordings are for a pre-registered paper test of order-book imbalance.
+
+It uses no keys and places no trades. It never sends orders.
+
+- `recorder/`: snapshot code. It uses only the Python standard library and only the public, unauthenticated `gateway.polymarket.us` endpoints, at 10 requests per second or less.
+- `analysis/`: loaders and generic book statistics. It contains no rule until the pre-registration is frozen.
+- `tests/`: offline tests. Run them with `python -m unittest discover -s tests -t .`
+- `docs/PLAN.md`: the design, data schema, cost and storage estimates, and the terms-of-service findings.
+- `docs/PREREGISTRATION.md`: the Phase 2 rule and pass bar. It is a draft until registered.
+
+Recorded data is **not** committed here. Polymarket US rules restrict redistributing market data; see `docs/PLAN.md`.
+
+Run it locally:
+
+```
+python -m recorder.record --out out
+```

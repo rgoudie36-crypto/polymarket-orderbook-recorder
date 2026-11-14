@@ -1,0 +1,60 @@
+name: record-books
+
+# Primary trigger: workflow_dispatch, called every ~15 min by cron-job.org.
+# Backup trigger: GitHub's own schedule (fires late, and only from the default branch).
+# Push trigger: smoke-tests the recorder against the live public API when its code changes.
+#
+# Nothing is stored unless the repository variable RECORDING_ENABLED is "true"
+# (Settings > Secrets and variables > Actions > Variables). It is a plain on/off
+# switch, not a secret. Until the data-storage question in docs/PLAN.md is settled,
+# runs only measure time and snapshot size and write them to the job summary.
+on:
+  workflow_dispatch:
+    inputs:
+      max_books:
+        description: "Max order books to fetch this run"
+        default: "800"
+  schedule:
+    - cron: "41 * * * *" # hourly backup; cron-job.org provides the 15-minute cadence
+  push:
+    branches: ["claude/**"]
+    paths: ["recorder/**", ".github/workflows/record.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: record-books
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.event_name != 'schedule' || vars.RECORDING_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline tests
+        run: python -m unittest discover -s tests -t .
+      - name: Record snapshot (public endpoints only, no keys)
+        run: python -m recorder.record --out out --max-books "${{ github.event.inputs.max_books || '800' }}"
+      - name: Job summary
+        if: always()
+        run: |
+          echo '### Run metadata' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          python -c "import json,glob;m=json.load(open(glob.glob('out/run-*.json')[0]));m['n_errors']=len(m.pop('errors'));print(json.dumps(m,indent=2))" >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      # Data is NOT committed to git (Polymarket US rules restrict redistribution).
+      # Note: artifacts on a public repo are downloadable by any signed-in GitHub
+      # user, so this stays off until the operator decides; see docs/PLAN.md.
+      - uses: actions/upload-artifact@v4
+        if: vars.RECORDING_ENABLED == 'true'
+        with:
+          name: books-${{ github.run_id }}
+          path: out/
+          retention-days: 90
+          if-no-files-found: error
