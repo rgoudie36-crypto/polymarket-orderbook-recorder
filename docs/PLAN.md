@@ -83,7 +83,7 @@ Local test run on 2026-11-14 (800 books, 0.1 s pacing):
 
 | item | estimate |
 |---|---|
-| Actions time per run | [Likely] ~2 min including runner setup. To be confirmed from the first GitHub-hosted run. |
+| Actions time per run | [Certain] **1 min 29 s** wall-clock on the first GitHub-hosted run (run 43553430583: 799 of 800 books, 1 error, 84 s recording, 68.7 KB). Billed as 2 min. |
 | Runs per day at 15-min cadence | 96 |
 | Storage per day | [Likely] ~7 MB (96 × ~70 KB); ~200 MB over 4 weeks |
 | Actions cost | [Likely] $0. Standard GitHub-hosted runners are free for public repos. |
