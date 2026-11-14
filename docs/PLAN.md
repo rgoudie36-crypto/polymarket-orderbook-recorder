@@ -137,9 +137,12 @@ Rejected alternatives:
 
 ### Encryption key
 
-**Current key is INTERIM (generated 2026-11-14 in a Claude session).** Its private half was generated in that session's temporary container, then saved to the operator's Google Drive (folder "polymarket-orderbook-recorder (private key + data)" / keys / recorder_private_INTERIM.pem, owner-only access) and deleted from the container. The operator should replace it with their own key, following the steps below. Files sealed with the interim key stay readable only with the interim private key, so keep that key until those files are decrypted or have expired.
+**Current key (generated 2026-11-14 in a Claude session) is kept as the permanent key** by operator decision. Its private half is in the operator's Google Drive at "polymarket-orderbook-recorder (private key + data)" / keys / recorder_private_INTERIM.pem, with owner-only access, and was deleted from the session container.
+- Trade-off accepted: the key was created in a cloud session rather than offline.
+- It protects only public market data that may not be redistributed, so this risk is low.
+- **Losing that file makes every snapshot unreadable. Keep an offline backup.**
 
-Operator's own key, made once on their own computer:
+Optional rotation to a key made offline:
 
 ```
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out recorder_private.pem
