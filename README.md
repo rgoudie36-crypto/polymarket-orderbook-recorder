@@ -10,7 +10,7 @@ It uses no keys and places no trades. It never sends orders.
 - `docs/PLAN.md`: the design, data schema, cost and storage estimates, and the terms-of-service findings.
 - `docs/PREREGISTRATION.md`: the Phase 2 rule and pass bar. It is a draft until registered.
 
-Recorded data is **not** committed here. Polymarket US rules restrict redistributing market data; see `docs/PLAN.md`.
+Recorded data is **not** committed here. Raw books are encrypted to the operator's public key before they are stored as Actions artifacts, because Polymarket US rules restrict redistribution. See `docs/PLAN.md`.
 
 Run it locally:
 

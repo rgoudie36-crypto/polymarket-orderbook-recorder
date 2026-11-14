@@ -1,6 +1,6 @@
 # Plan: Polymarket US order-book recorder
 
-Status: Phase 1 code written. Recording is not switched on yet; it waits on the storage decision below.
+Status: Phase 1 code written; storage decided (encrypted artifacts). Recording starts once the operator's public key is committed.
 
 ## What this is, and what it is not
 
@@ -98,7 +98,7 @@ Scheduling:
 - **Backup:** GitHub `schedule` runs hourly at :41. It only fires from the default branch and only when `RECORDING_ENABLED=true`.
 - The `concurrency` group stops runs from overlapping.
 
-## Storage and the terms question (unresolved, needs the operator)
+## Storage and the terms question
 
 What I found (checked 2026-11-14):
 - [Certain] The **Polymarket US Rulebook** (polymarketexchange.com/files/legal/latest/rulebook, dated Sept 30, 2026) says: *"Any Person receiving information through the Trading System is expressly prohibited from redistributing such information unless expressly permitted by the Company."* "Trading System" is defined to include API connectivity.
@@ -109,15 +109,47 @@ What I found (checked 2026-11-14):
 - [Guessing] Whether the Rulebook binds an anonymous API reader is untested. I would not rely on it not binding.
 - Not checked: the polymarket.us/tos body did not render. I found no scraping or automated-access clause in the documents I could read.
 
-Consequences:
-1. **Never commit recorded data to this repo.** `.gitignore` excludes `out/` and data files.
-2. **GitHub Actions artifacts are not private on a public repo.** [Certain] Any signed-in GitHub user can download a public repo's artifacts. Storing snapshots as artifacts here is therefore close to publishing them. Upload is off by default, gated by the `RECORDING_ENABLED` repository variable.
-3. Options for the operator, with my ranking:
-   - **(a) Email data@polymarket.us** and ask whether private recording for personal research is fine and whether artifacts are OK. Free, and slow. Do it regardless of which option you pick.
-   - **(b) Make this repo private.** Then artifacts are private. The cost is that Actions minutes count against the 2,000 free minutes per month. At ~2 billed minutes × 96 runs/day that is about 5,800 minutes per month, so it **exceeds the free tier**. A 30-minute cadence still exceeds it (~2,900). Hourly fits (~1,450).
-   - **(c) Keep the repo public and encrypt artifacts** with a public key stored in the repo. Only the operator's offline private key can decrypt them. This needs no Polymarket keys and no GitHub secrets, because the private key never touches GitHub. The cost is one small dependency (`age` or `openssl`, which is preinstalled on runners).
-   - **(d) Run the recorder on the operator's own machine** (cron or Task Scheduler). Fully private and free, but it depends on that machine being on.
-   - **My pick:** (c) plus (a). Encrypt with `openssl` and keep 15-minute public-repo runs. I'll build it if you agree.
+Decision (operator, 2026-11-14): split the data into two classes.
+
+| Class | What | Where |
+|---|---|---|
+| Public (ours) | Code, docs, tests, the pre-registration; run stats (counts, timings, error codes); later, aggregate paper-test results | Git, plus each run's job summary |
+| Restricted (Polymarket's) | Raw order-book snapshots (`books-*.jsonl.gz`) | **Encrypted** Actions artifacts, kept 90 days; optional encrypted copies in the operator's Google Drive |
+
+How the restricted class is protected:
+1. **Never committed.** `.gitignore` excludes `out/`, `upload/` and all data files.
+2. **Encrypted before it leaves the runner.** [Certain] Artifacts on a public repo can be downloaded by any signed-in GitHub user.
+   - `recorder/seal.py` encrypts each books file with a fresh AES-256 key.
+   - That key is then encrypted to the operator's RSA public key (`keys/recorder_public.pem`) using OAEP.
+   - Only `*.enc` files and `run-*.json` go into the upload folder. The script refuses to proceed if anything else is there.
+3. **No secrets in GitHub.**
+   - The public key is meant to be public.
+   - The private key stays on the operator's computer. `tools/unseal.sh` decrypts there.
+   - This keeps the repo public and its Actions free.
+4. **Still to do:** email data@polymarket.us to ask two things:
+   - whether private recording for personal research is fine
+   - whether historical book data is available, which would make recording unnecessary
+
+Rejected alternatives:
+- **Make the repo private.** About 5,800 Actions minutes a month, which exceeds the 2,000 free.
+- **Upload directly to Google Drive, Cloudflare or S3.** Each needs a long-lived token stored in GitHub.
+- **Run on the operator's machine.** It only records while the machine is on.
+
+### Encryption key (operator does this once, on their own computer)
+
+```
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out recorder_private.pem
+openssl pkey -in recorder_private.pem -pubout -out recorder_public.pem
+```
+
+- Put the contents of `recorder_public.pem` into `keys/recorder_public.pem` in this repo, replacing the placeholder.
+- Back up `recorder_private.pem` somewhere safe, such as a password manager. It is **never** committed or pasted anywhere.
+- If it is lost, every recorded file is unreadable.
+- To read the data later:
+
+```
+tools/unseal.sh recorder_private.pem <downloaded-artifact-folder>
+```
 
 ## Analysis (Phases 2–3)
 

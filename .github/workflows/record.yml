@@ -4,10 +4,12 @@ name: record-books
 # Backup trigger: GitHub's own schedule (fires late, and only from the default branch).
 # Push trigger: smoke-tests the recorder against the live public API when its code changes.
 #
-# Nothing is stored unless the repository variable RECORDING_ENABLED is "true"
-# (Settings > Secrets and variables > Actions > Variables). It is a plain on/off
-# switch, not a secret. Until the data-storage question in docs/PLAN.md is settled,
-# runs only measure time and snapshot size and write them to the job summary.
+# Storage: raw books are ENCRYPTED to the operator's public key (keys/recorder_public.pem)
+# before upload, because artifacts on a public repo are downloadable by any signed-in
+# GitHub user and Polymarket US restricts redistribution of its data. Only plain run
+# stats (counts, timings) are readable. Until a real public key is committed, runs only
+# measure and nothing is uploaded. Scheduled backup runs also need the repository
+# variable RECORDING_ENABLED=true (a plain on/off switch, not a secret).
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +20,7 @@ on:
     - cron: "41 * * * *" # hourly backup; cron-job.org provides the 15-minute cadence
   push:
     branches: ["claude/**"]
-    paths: ["recorder/**", ".github/workflows/record.yml"]
+    paths: ["recorder/**", "keys/**", ".github/workflows/record.yml"]
 
 permissions:
   contents: read
@@ -48,13 +50,22 @@ jobs:
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
           python -c "import json,glob;m=json.load(open(glob.glob('out/run-*.json')[0]));m['n_errors']=len(m.pop('errors'));print(json.dumps(m,indent=2))" >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-      # Data is NOT committed to git (Polymarket US rules restrict redistribution).
-      # Note: artifacts on a public repo are downloadable by any signed-in GitHub
-      # user, so this stays off until the operator decides; see docs/PLAN.md.
+      - name: Encryption key present?
+        id: key
+        run: |
+          if grep -q "BEGIN PUBLIC KEY" keys/recorder_public.pem && ! grep -q "PRIVATE KEY" keys/recorder_public.pem; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "No real public key in keys/recorder_public.pem: measured only, nothing stored." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Encrypt books (raw data never leaves the runner unencrypted)
+        if: steps.key.outputs.ready == 'true'
+        run: python -m recorder.seal --pubkey keys/recorder_public.pem --src out --dest upload
       - uses: actions/upload-artifact@v4
-        if: vars.RECORDING_ENABLED == 'true'
+        if: steps.key.outputs.ready == 'true'
         with:
           name: books-${{ github.run_id }}
-          path: out/
+          path: upload/
           retention-days: 90
           if-no-files-found: error

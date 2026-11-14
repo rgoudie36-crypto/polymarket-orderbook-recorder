@@ -1,5 +1,6 @@
 # Recorded market data must never be committed (see docs/PLAN.md, terms question).
 out/
+upload/
 data/
 *.jsonl
 *.jsonl.gz
