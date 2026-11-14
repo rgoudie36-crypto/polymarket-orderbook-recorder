@@ -8,8 +8,8 @@ name: record-books
 # before upload, because artifacts on a public repo are downloadable by any signed-in
 # GitHub user and Polymarket US restricts redistribution of its data. Only plain run
 # stats (counts, timings) are readable. Until a real public key is committed, runs only
-# measure and nothing is uploaded. Scheduled backup runs also need the repository
-# variable RECORDING_ENABLED=true (a plain on/off switch, not a secret).
+# measure and nothing is uploaded. To pause recording, disable this workflow in the
+# repository's Actions tab.
 on:
   workflow_dispatch:
     inputs:
@@ -17,7 +17,8 @@ on:
         description: "Max order books to fetch this run"
         default: "800"
   schedule:
-    - cron: "41 * * * *" # hourly backup; cron-job.org provides the 15-minute cadence
+    # INTERIM: every 15 min until cron-job.org is set up; then change back to hourly backup ("41 * * * *").
+    - cron: "7,22,37,52 * * * *"
   push:
     branches: ["claude/**"]
     paths: ["recorder/**", "keys/**", ".github/workflows/record.yml"]
@@ -31,7 +32,6 @@ concurrency:
 
 jobs:
   record:
-    if: github.event_name != 'schedule' || vars.RECORDING_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:

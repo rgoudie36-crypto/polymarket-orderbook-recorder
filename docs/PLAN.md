@@ -93,9 +93,9 @@ Rate limit:
 - We run at ≤10 req/s.
 - On 429 or 5xx we wait 1 s, then back off exponentially up to 4 retries, as the docs ask.
 
-Scheduling:
+Scheduling (interim: GitHub `schedule` every 15 minutes, at :07/:22/:37/:52, until cron-job.org is set up):
 - **Primary:** cron-job.org calls the GitHub API `workflow_dispatch` endpoint every 15 minutes.
-- **Backup:** GitHub `schedule` runs hourly at :41. It only fires from the default branch and only when `RECORDING_ENABLED=true`.
+- **Backup:** GitHub `schedule` runs hourly at :41 once cron-job.org is live. It only fires from the default branch.
 - The `concurrency` group stops runs from overlapping.
 
 ## Storage and the terms question
@@ -135,7 +135,11 @@ Rejected alternatives:
 - **Upload directly to Google Drive, Cloudflare or S3.** Each needs a long-lived token stored in GitHub.
 - **Run on the operator's machine.** It only records while the machine is on.
 
-### Encryption key (operator does this once, on their own computer)
+### Encryption key
+
+**Current key is INTERIM (generated 2026-11-14 in a Claude session).** Its private half was generated in that session's temporary container, not on the operator's machine. The operator should replace it with their own key, following the steps below. Files sealed with the interim key stay readable only with the interim private key, so keep that key until those files are decrypted or have expired.
+
+Operator's own key, made once on their own computer:
 
 ```
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out recorder_private.pem

@@ -45,7 +45,9 @@ class SealTests(unittest.TestCase):
 
     def test_refuses_placeholder_and_private_keys(self):
         with self.assertRaises(SystemExit):
-            seal.check_pubkey(os.path.join(ROOT, "keys", "recorder_public.pem"))
+            ph = os.path.join(self.d, "placeholder.pem")
+            open(ph, "w").write(seal.PLACEHOLDER_MARKER + "\n")
+            seal.check_pubkey(ph)
         with self.assertRaises(SystemExit):
             seal.check_pubkey(self.priv)
 
@@ -59,3 +61,9 @@ class SealTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RepoKeyTests(unittest.TestCase):
+    def test_repo_key_is_public_only(self):
+        text = open(os.path.join(ROOT, "keys", "recorder_public.pem")).read()
+        self.assertNotIn("PRIVATE KEY", text)
