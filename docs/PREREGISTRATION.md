@@ -1,8 +1,8 @@
 # Pre-registration: three order-book rules, paper forward test
 
-> **PROPOSED — awaiting operator's final "register it". NOT YET REGISTERED.**
+> **REGISTERED 2026-11-14 by the operator.** The commit that introduced this banner is the registration.
 >
-> This file becomes binding when a commit changes this banner to `REGISTERED <date>`. That commit's hash is the registration.
+> The test window starts at the first recorder run after that commit's timestamp. Nothing below may change except through the change log, and then only for bug fixes.
 > - Data recorded **before** that commit may be used only to check plumbing (does the code run), never to choose or change anything here.
 > - Disclosure: before drafting, one snapshot's *structure* was inspected (2026-11-14: 221/800 books one-sided, median 7 price levels). No prices were compared with outcomes.
 > - Rule selection: an advisory council, recorded in `docs/council/2026-11-14-strategy-council.md`.
